@@ -35,10 +35,19 @@ class Search extends React.Component {
             book.hasOwnProperty("imageLinks") &&
             book.imageLinks.hasOwnProperty('thumbnail') &&
             book.hasOwnProperty("title") &&
-            book.hasOwnProperty('authors')
+            book.hasOwnProperty("authors")
           ));
 
           if (filteredBooks.length !== 0) {
+            filteredBooks.map((book) => book.shelf="none");
+            filteredBooks.map((book) => {
+              this.props.books.forEach((b) => {
+                if (b.id === book.id) {
+                  book.shelf = b.shelf;
+                }
+              })
+            });
+
             this.setState(() => ({
               search: filteredBooks
             }))
@@ -53,23 +62,6 @@ class Search extends React.Component {
           }))
         }
       });
-  };
-
-  handleShelves = (allBooks) => {
-    const { searched } = this.state;
-    searched.map((book) => book.shelf="none");
-
-    const shelvedBooks = allBooks.forEach((book) => {
-      searched.map((b) => {
-        if (b.id === book.id) {
-          b.shelf = book.shelf;
-        }
-      })
-    });
-
-    this.setState(() => ({
-      search: shelvedBooks
-    }))
   };
 
   render() {
