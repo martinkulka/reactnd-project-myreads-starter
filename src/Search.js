@@ -1,24 +1,105 @@
-import React from 'react'
+import React from 'react';
+import * as BooksAPI from './BooksAPI';
+import { Link } from "react-router-dom";
+import Book from "./Book";
 
-<div className="search-books">
-  <div className="search-books-bar">
-    <button className="close-search" onClick={() => this.setState({ showSearchPage: false })}>Close</button>
-    <div className="search-books-input-wrapper">
-      {/*
-                  NOTES: The search from BooksAPI is limited to a particular set of search terms.
-                  You can find these search terms here:
-                  https://github.com/udacity/reactnd-project-myreads-starter/blob/master/SEARCH_TERMS.md
+class Search extends React.Component {
+  state = {
+    query: '',
+    search: []
+  };
 
-                  However, remember that the BooksAPI.search method DOES search by title or author. So, don't worry if
-                  you don't find a specific author or title. Every search is limited by search terms.
-                */}
-      <input type="text" placeholder="Search by title or author"/>
+  handleQuery = (event) => {
+    event.preventDefault();
+    const { value } = event.target;
 
-    </div>
-  </div>
-  <div className="search-books-results">
-    <ol className="books-grid"></ol>
-  </div>
-</div>
+    if (value === '' || value === null) {
+      this.setState(() => ({
+        query: value,
+        search: []
+      }))
+    } else {
+      this.setState(() => ({
+        query: value
+      }));
+
+      this.handleSearch(value)
+    }
+  };
+
+  handleSearch = (query) => {
+    BooksAPI.search(query)
+      .then((data) => {
+        if (data.error !== 'empty query') {
+          const filteredBooks = data.filter((book) => (
+            book.hasOwnProperty("imageLinks") &&
+            book.imageLinks.hasOwnProperty('thumbnail') &&
+            book.hasOwnProperty("title") &&
+            book.hasOwnProperty('authors')
+          ));
+
+          if (filteredBooks.length !== 0) {
+            this.setState(() => ({
+              search: filteredBooks
+            }))
+          } else {
+            this.setState(() => ({
+              search: []
+            }))
+          }
+        } else {
+          this.setState(() => ({
+            search: []
+          }))
+        }
+      });
+  };
+
+  handleShelves = (allBooks) => {
+    const { searched } = this.state;
+    searched.map((book) => book.shelf="none");
+
+    const shelvedBooks = allBooks.forEach((book) => {
+      searched.map((b) => {
+        if (b.id === book.id) {
+          b.shelf = book.shelf;
+        }
+      })
+    });
+
+    this.setState(() => ({
+      search: shelvedBooks
+    }))
+  };
+
+  render() {
+    const { query, search } = this.state;
+
+    return (
+      <div className="search-books">
+        <div className="search-books-bar">
+          <Link className="close-search" to="/"/>
+          <div className="search-books-input-wrapper">
+            <input
+              type="text"
+              placeholder="Search by title or author"
+              value={query}
+              onChange={this.handleQuery}
+            />
+          </div>
+        </div>
+        <div className="search-books-results">
+          <ol className="books-grid">
+            {search && search.length !== 0 && search.map((book) => (
+              <li key={book.id}>
+                <Book book={book} onMove={this.props.onMove}/>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    )
+  }
+}
 
 export default Search
